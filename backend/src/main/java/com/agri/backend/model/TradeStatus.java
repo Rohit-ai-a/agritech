@@ -1,0 +1,15 @@
+package com.agri.backend.model;
+
+public enum TradeStatus {
+    REQUESTED,
+    NEGOTIATING,
+    AGREED,
+    INSPECTION_PENDING,
+    INSPECTION_PASSED,
+    INSPECTION_FAILED,
+    SHIPPED,
+    DELIVERED,
+    COMPLETED,
+    CANCELLED,
+    DISPUTED
+}
