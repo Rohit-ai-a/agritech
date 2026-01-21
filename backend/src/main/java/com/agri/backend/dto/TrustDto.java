@@ -27,6 +27,7 @@ public class TrustDto {
         private UUID id;
         private UUID tradeId;
         private String inspectorName;
+        private String assignmentStatus;
         private String result;
         private String grade;
         private String certificateUrl;

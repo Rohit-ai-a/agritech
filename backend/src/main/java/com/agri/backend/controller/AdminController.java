@@ -26,14 +26,18 @@ public class AdminController {
     private final UserRepository userRepository;
     private final com.agri.backend.repository.CropRepository cropRepository;
 
-    @GetMapping("/trades/agreed")
-    public ResponseEntity<List<TradeDto.TradeResponse>> getAgreedTrades() {
-        List<Trade> trades = tradeRepository.findByStatus(TradeStatus.AGREED);
+    @GetMapping("/trades/pending-assignment")
+    public ResponseEntity<List<TradeDto.TradeResponse>> getPendingAssignmentTrades() {
+        List<Trade> trades = tradeRepository.findAll().stream()
+                .filter(t -> t.getStatus() == TradeStatus.AGREED || t.getStatus() == TradeStatus.INSPECTION_REQUESTED)
+                .collect(Collectors.toList());
         // We need manually map or expose mapper. For speed, manual small validation.
         return ResponseEntity.ok(trades.stream().map(t -> TradeDto.TradeResponse.builder()
                 .id(t.getId())
+                .cropId(t.getCrop().getId()) // Added cropId which was missing in builder call if used
                 .cropName(t.getCrop().getName())
                 .farmerName(t.getFarmer().getName())
+                .farmerState(t.getFarmer().getState()) // Populate state
                 .buyerName(t.getBuyer().getName())
                 .finalPrice(t.getFinalPrice())
                 .status(t.getStatus())
@@ -45,37 +49,20 @@ public class AdminController {
     public ResponseEntity<List<UserDto>> getInspectors() {
         List<User> inspectors = userRepository.findByRole(Role.INSPECTOR);
         return ResponseEntity
-                .ok(inspectors.stream().map(u -> new UserDto(u.getId(), u.getName())).collect(Collectors.toList()));
+                .ok(inspectors.stream().map(u -> new UserDto(u.getId(), u.getName(), u.getState()))
+                        .collect(Collectors.toList()));
     }
 
-    @PostMapping("/trades/{id}/force-close")
-    public ResponseEntity<Void> forceCloseDispute(@PathVariable @NonNull UUID id,
-            @RequestParam boolean resolveToBuyer) {
-        Trade trade = tradeRepository.findById(id).orElseThrow(() -> new RuntimeException("Trade not found"));
-        if (trade.getStatus() != TradeStatus.DISPUTED) {
-            throw new RuntimeException("Only disputed trades can be force-closed");
-        }
+    // ... forceCloseDispute ...
 
-        // Logic: If resolveToBuyer is true, maybe we cancel?
-        // For simplicity, let's just mark it COMPLETED or CANCELLED based on admin
-        // decision.
-        trade.setStatus(resolveToBuyer ? TradeStatus.COMPLETED : TradeStatus.CANCELLED);
-        tradeRepository.save(trade);
-        return ResponseEntity.ok().build();
-    }
-
-    @PatchMapping("/users/{userId}/status")
-    public ResponseEntity<Void> updateUserStatus(@PathVariable UUID userId, @RequestParam boolean active) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-        user.setActive(active);
-        userRepository.save(user);
-        return ResponseEntity.ok().build();
-    }
+    // ... updateUserStatus ...
 
     @GetMapping("/users")
     public ResponseEntity<List<UserDto>> getAllUsers() {
         return ResponseEntity.ok(userRepository.findAll().stream()
-                .map(u -> new UserDto(u.getId(), u.getName(), u.getEmail(), u.getRole(), u.isActive()))
+                .map(u -> new UserDto(u.getId(), u.getName(), u.getEmail(), u.getState(), u.getRole(), u.isActive())) // Update
+                                                                                                                      // constructor
+                                                                                                                      // call
                 .collect(Collectors.toList()));
     }
 
@@ -93,12 +80,14 @@ public class AdminController {
         private UUID id;
         private String name;
         private String email;
+        private String state;
         private Role role;
         private boolean active;
 
-        public UserDto(UUID id, String name) {
+        public UserDto(UUID id, String name, String state) {
             this.id = id;
             this.name = name;
+            this.state = state;
         }
     }
 

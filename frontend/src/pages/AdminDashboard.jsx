@@ -43,7 +43,7 @@ const AdminDashboard = () => {
 
     const fetchAdminData = async () => {
         try {
-            const tradesRes = await api.get('/admin/trades/agreed');
+            const tradesRes = await api.get('/admin/trades/pending-assignment');
             const inspRes = await api.get('/admin/inspectors');
             const metricsRes = await api.get('/admin/metrics');
             const usersRes = await api.get('/admin/users');
@@ -176,37 +176,53 @@ const AdminDashboard = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {adminTrades.length === 0 ? (
-                                    <tr><td colSpan="4" className="p-8 text-center text-secondary-400">No pending assignments.</td></tr>
-                                ) : (
-                                    adminTrades.map(trade => (
-                                        <tr key={trade.id} className="hover:bg-gray-50">
-                                            <td className="p-4">
-                                                <div className="font-bold text-secondary-900">{trade.cropName}</div>
-                                                <div className="text-xs text-secondary-500 font-mono">ID: {trade.id}</div>
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="font-mono font-medium">₹{trade.finalPrice}</div>
-                                                <Badge variant="warning" className="mt-1">{trade.status}</Badge>
-                                            </td>
-                                            <td className="p-4 text-sm text-secondary-600">
-                                                F: {trade.farmerName}<br />B: {trade.buyerName}
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="flex gap-2 items-center">
-                                                    <select
-                                                        className="border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-primary-500 outline-none transition"
-                                                        value={assignments[trade.id] || ''}
-                                                        onChange={(e) => setAssignments(prev => ({ ...prev, [trade.id]: e.target.value }))}
-                                                    >
-                                                        <option value="">Select Inspector...</option>
-                                                        {inspectors.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                                                    </select>
-                                                    <Button size="sm" onClick={() => handleAssign(trade.id)}>Assign</Button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
+                                    adminTrades.map(trade => {
+                                        // Filter inspectors based on farmer's state
+                                        const eligibleInspectors = inspectors.filter(i => i.state === trade.farmerState);
+
+                                return (
+                                <tr key={trade.id} className="hover:bg-gray-50">
+                                    <td className="p-4">
+                                        <div className="font-bold text-secondary-900">{trade.cropName}</div>
+                                        <div className="text-xs text-secondary-500 font-mono">ID: {trade.id}</div>
+                                        <div className="text-xs text-secondary-400 mt-1">State: {trade.farmerState || 'N/A'}</div>
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="font-mono font-medium">₹{trade.finalPrice}</div>
+                                        <Badge variant="warning" className="mt-1">{trade.status}</Badge>
+                                    </td>
+                                    <td className="p-4 text-sm text-secondary-600">
+                                        F: {trade.farmerName}<br />B: {trade.buyerName}
+                                    </td>
+                                    <td className="p-4">
+                                        {trade.status === 'INSPECTION_REQUESTED' ? (
+                                            <Badge variant="info">Request Sent</Badge>
+                                        ) : (
+                                            <div className="flex gap-2 items-center">
+                                                <select
+                                                    className="border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-primary-500 outline-none transition w-40"
+                                                    value={assignments[trade.id] || ''}
+                                                    onChange={(e) => setAssignments(prev => ({ ...prev, [trade.id]: e.target.value }))}
+                                                >
+                                                    <option value="">Select Inspector...</option>
+                                                    {eligibleInspectors.length > 0 ? (
+                                                        eligibleInspectors.map(i => <option key={i.id} value={i.id}>{i.name}</option>)
+                                                    ) : (
+                                                        <option disabled>No inspectors in {trade.farmerState}</option>
+                                                    )}
+                                                </select>
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => handleAssign(trade.id)}
+                                                    disabled={!assignments[trade.id]}
+                                                >
+                                                    Request
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </td>
+                                </tr>
+                                    )})
                                 )}
                             </tbody>
                         </table>

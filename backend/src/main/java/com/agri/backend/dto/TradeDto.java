@@ -33,6 +33,7 @@ public class TradeDto {
         private String buyerName;
         private UUID farmerId;
         private String farmerName;
+        private String farmerState;
         private BigDecimal finalPrice;
         private TradeStatus status;
         private LocalDateTime createdAt;

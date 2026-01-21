@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AddCrop from './pages/AddCrop';
 import TradePage from './pages/TradePage';
+import TradeListPage from './pages/TradeListPage';
 import AdminDashboard from './pages/AdminDashboard';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './ProtectedRoute';
@@ -21,6 +22,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trades"
+            element={
+              <ProtectedRoute>
+                <TradeListPage />
               </ProtectedRoute>
             }
           />

@@ -10,7 +10,8 @@ import {
     LogOut,
     Menu,
     ChevronLeft,
-    Shield
+    Shield,
+    Briefcase
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -55,6 +56,7 @@ const Layout = ({ children }) => {
 
     const menuItems = [
         { role: ['FARMER', 'BUYER', 'INSPECTOR'], label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+        { role: ['FARMER', 'BUYER', 'INSPECTOR'], label: 'Trades', icon: Briefcase, path: '/trades' },
         { role: ['FARMER'], label: 'My Crops', icon: Sprout, path: '/my-listings' }, // Hypothetical path mapping
         { role: ['BUYER'], label: 'Marketplace', icon: ShoppingCart, path: '/marketplace' },
         { role: ['INSPECTOR'], label: 'Inspections', icon: ClipboardList, path: '/inspections' },

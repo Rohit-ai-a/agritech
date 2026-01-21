@@ -38,11 +38,38 @@ public class TrustService {
         Inspection inspection = Inspection.builder()
                 .trade(trade)
                 .inspector(inspector)
+                .assignmentStatus("REQUESTED")
                 .inspectionResult("PENDING")
                 .build();
 
         inspectionRepository.save(inspection);
-        trade.setStatus(TradeStatus.INSPECTION_PENDING);
+        trade.setStatus(TradeStatus.INSPECTION_REQUESTED);
+        tradeRepository.save(trade);
+    }
+
+    @Transactional
+    public void respondToAssignment(UUID inspectionId, boolean accepted) {
+        Inspection inspection = inspectionRepository.findById(inspectionId)
+                .orElseThrow(() -> new RuntimeException("Inspection request not found"));
+
+        if (!"REQUESTED".equals(inspection.getAssignmentStatus())) {
+            throw new RuntimeException("Inspection is not in REQUESTED state");
+        }
+
+        Trade trade = inspection.getTrade();
+
+        if (accepted) {
+            inspection.setAssignmentStatus("ACCEPTED");
+            trade.setStatus(TradeStatus.INSPECTION_PENDING);
+        } else {
+            inspection.setAssignmentStatus("REJECTED");
+            trade.setStatus(TradeStatus.AGREED); // Back to pool
+            // Optionally delete authentication logic or keep history.
+            // Keeping history means we might have multiple inspections for one trade.
+            // For simplicity, we just keep it REJECTED.
+        }
+
+        inspectionRepository.save(inspection);
         tradeRepository.save(trade);
     }
 
@@ -156,6 +183,7 @@ public class TrustService {
                         .id(i.getId())
                         .tradeId(i.getTrade().getId())
                         .inspectorName(i.getInspector().getName())
+                        .assignmentStatus(i.getAssignmentStatus())
                         .result(i.getInspectionResult())
                         .grade(i.getGrade())
                         .certificateUrl(i.getCertificateUrl())

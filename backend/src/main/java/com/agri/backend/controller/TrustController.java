@@ -20,6 +20,12 @@ public class TrustController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/inspection/{id}/respond")
+    public ResponseEntity<Void> respondToAssignment(@PathVariable UUID id, @RequestParam boolean accept) {
+        trustService.respondToAssignment(id, accept);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/complete-inspection")
     public ResponseEntity<Void> completeInspection(
             @RequestBody com.agri.backend.dto.TrustDto.InspectionRequest request) {

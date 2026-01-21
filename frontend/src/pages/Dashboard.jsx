@@ -10,17 +10,28 @@ import InspectionModal from '../components/InspectionModal';
 import LogisticsModal from '../components/LogisticsModal';
 import TradeDetailsModal from '../components/TradeDetailsModal';
 import RatingModal from '../components/RatingModal';
+import RevenueDetailsModal from '../components/RevenueDetailsModal';
+import ActiveListingsModal from '../components/ActiveListingsModal';
+import CompletedTradesModal from '../components/CompletedTradesModal';
 import { Sprout, Briefcase, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const StatCard = ({ title, value, icon: Icon, color }) => (
-    <Card className="p-6 relative overflow-hidden">
+const StatCard = ({ title, value, icon: Icon, color, onClick }) => (
+    <Card
+        className={`p-6 relative overflow-hidden transition-all duration-300 ${onClick ? 'cursor-pointer hover:shadow-lg hover:-translate-y-1' : ''}`}
+        onClick={onClick}
+    >
         <div className={`absolute right-0 top-0 p-4 opacity-10 text-${color}-500`}>
             <Icon size={64} />
         </div>
         <div className="relative z-10">
             <h3 className="text-secondary-500 text-sm font-bold uppercase tracking-wider">{title}</h3>
             <p className="text-3xl font-bold mt-2 text-secondary-900">{value}</p>
+            {onClick && (
+                <div className={`mt-4 text-xs font-semibold text-${color}-600 inline-flex items-center gap-1`}>
+                    View Details →
+                </div>
+            )}
         </div>
         <div className={`absolute bottom-0 left-0 h-1 w-full bg-${color}-500`} />
     </Card>
@@ -36,6 +47,9 @@ const Dashboard = () => {
     const [showLogisticsModal, setShowLogisticsModal] = useState(false);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [showRatingModal, setShowRatingModal] = useState(false);
+    const [showRevenueModal, setShowRevenueModal] = useState(false);
+    const [showActiveListingsModal, setShowActiveListingsModal] = useState(false);
+    const [showCompletedTradesModal, setShowCompletedTradesModal] = useState(false);
     const [reputation, setReputation] = useState(0);
     const navigate = useNavigate();
 
@@ -145,18 +159,21 @@ const Dashboard = () => {
                                 value={crops.filter(c => c.status === 'AVAILABLE').length}
                                 icon={Sprout}
                                 color="green"
+                                onClick={() => setShowActiveListingsModal(true)}
                             />
                             <StatCard
                                 title="Total Trades"
                                 value={myTrades.length}
                                 icon={Briefcase}
                                 color="blue"
+                                onClick={() => setShowCompletedTradesModal(true)}
                             />
                             <StatCard
                                 title="Revenue (Est)"
                                 value={`₹${myTrades.reduce((acc, t) => acc + (t.status === 'COMPLETED' ? t.finalPrice : 0), 0)}`}
                                 icon={TrendingUp}
                                 color="purple"
+                                onClick={() => setShowRevenueModal(true)}
                             />
                         </div>
 
@@ -195,6 +212,23 @@ const Dashboard = () => {
                 {/* Buyer View */}
                 {user.role === 'BUYER' && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                        {/* Buyer Stats */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <StatCard
+                                title="Total Trades"
+                                value={myTrades.length}
+                                icon={Briefcase}
+                                color="blue"
+                            />
+                            <StatCard
+                                title="Total Spent"
+                                value={`₹${myTrades.reduce((acc, t) => acc + (t.status === 'COMPLETED' ? t.finalPrice : 0), 0)}`}
+                                icon={TrendingUp}
+                                color="purple"
+                                onClick={() => setShowRevenueModal(true)}
+                            />
+                        </div>
+
                         <h2 className="text-xl font-bold text-secondary-800">Marketplace</h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {crops.map(crop => (
@@ -278,60 +312,16 @@ const Dashboard = () => {
                     </Card>
                 )}
 
-                {/* Recent Trades Table */}
-                {(user.role === 'FARMER' || user.role === 'BUYER') && (
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                        <h2 className="text-xl font-bold text-secondary-800 mb-4">Recent Trades</h2>
-                        <Card className="overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead className="bg-gray-50 text-secondary-500 uppercase text-xs font-bold">
-                                        <tr>
-                                            <th className="p-4">Crop</th>
-                                            <th className="p-4">Party</th>
-                                            <th className="p-4">Price</th>
-                                            <th className="p-4">Status</th>
-                                            <th className="p-4">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100">
-                                        {myTrades.map(trade => (
-                                            <tr key={trade.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="p-4 font-medium">{trade.cropName}</td>
-                                                <td className="p-4 text-sm text-secondary-600">{user.role === 'FARMER' ? trade.buyerName : trade.farmerName}</td>
-                                                <td className="p-4 font-mono">₹{trade.finalPrice}</td>
-                                                <td className="p-4"><Badge variant={getStatusVariant(trade.status)}>{trade.status}</Badge></td>
-                                                <td className="p-4">
-                                                    <div className="flex gap-2">
-                                                        {user.role === 'FARMER' && trade.status === 'REQUESTED' && (
-                                                            <>
-                                                                <Button size="sm" variant="success" onClick={async () => { await api.patch(`/trades/${trade.id}/status?status=AGREED`); fetchData(); }}>Accept</Button>
-                                                                <Button size="sm" variant="destructive" onClick={async () => { await api.patch(`/trades/${trade.id}/status?status=CANCELLED`); fetchData(); }}>Decline</Button>
-                                                            </>
-                                                        )}
-                                                        {['SHIPPED', 'DELIVERED', 'COMPLETED'].includes(trade.status) && (
-                                                            <Button size="sm" variant="outline" onClick={() => { setSelectedTradeId(trade.id); setShowLogisticsModal(true); }}>Track</Button>
-                                                        )}
-                                                        <Button size="sm" variant="ghost" onClick={() => { setSelectedTradeId(trade.id); setShowDetailsModal(true); }}>Timeline</Button>
-                                                        {trade.status === 'COMPLETED' && (
-                                                            <Button size="sm" variant="secondary" onClick={() => { setSelectedTradeId(trade.id); setShowRatingModal(true); }}>Rate</Button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </Card>
-                    </motion.div>
-                )}
+                {/* Recent Trades Table Removed - Moved to Global Trade Page */}
 
                 {/* Modals */}
                 {showInspectionModal && <InspectionModal tradeId={selectedTradeId} onClose={() => setShowInspectionModal(false)} onSuccess={fetchData} />}
                 {showLogisticsModal && <LogisticsModal tradeId={selectedTradeId} userRole={user.role} onClose={() => setShowLogisticsModal(false)} />}
                 {showDetailsModal && <TradeDetailsModal tradeId={selectedTradeId} onClose={() => setShowDetailsModal(false)} />}
                 {showRatingModal && <RatingModal tradeId={selectedTradeId} onClose={() => setShowRatingModal(false)} onSuccess={fetchData} />}
+                {showRevenueModal && <RevenueDetailsModal trades={myTrades} role={user.role} onClose={() => setShowRevenueModal(false)} />}
+                {showActiveListingsModal && <ActiveListingsModal crops={crops} onClose={() => setShowActiveListingsModal(false)} />}
+                {showCompletedTradesModal && <CompletedTradesModal trades={myTrades} role={user.role} onClose={() => setShowCompletedTradesModal(false)} />}
             </div>
         </Layout>
     );

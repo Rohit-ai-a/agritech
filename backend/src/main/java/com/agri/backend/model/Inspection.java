@@ -31,6 +31,9 @@ public class Inspection {
     private String grade; // A, B, C
     private String certificateUrl;
 
+    // Status of the assignment request: REQUESTED, ACCEPTED, REJECTED
+    private String assignmentStatus;
+
     // Status of the inspection itself
     private String inspectionResult; // PASSED / FAILED
 }

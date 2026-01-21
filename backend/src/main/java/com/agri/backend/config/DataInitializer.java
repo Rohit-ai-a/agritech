@@ -30,7 +30,7 @@ public class DataInitializer implements CommandLineRunner {
                     .email(adminUsername)
                     .passwordHash(passwordEncoder.encode(adminPassword))
                     .role(Role.ADMIN)
-                    .state("Delhi") // Default state
+                    .state("Maharashtra")
                     .kycStatus(true)
                     .build();
             userRepository.save(admin);

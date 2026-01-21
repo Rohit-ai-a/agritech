@@ -6,6 +6,8 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { Sprout } from 'lucide-react';
 
+import loginBg from '../assets/images/login-bg.png';
+
 const Login = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const { login } = useAuth();
@@ -35,7 +37,7 @@ const Login = () => {
             <div className="hidden lg:flex w-1/2 bg-primary-800 relative items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-900 opacity-90" />
                 <img
-                    src="https://images.unsplash.com/photo-1625246333195-098e4f738936?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+                    src={loginBg}
                     alt="Agriculture"
                     className="absolute inset-0 w-full h-full object-cover mix-blend-overlay"
                 />
