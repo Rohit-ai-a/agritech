@@ -31,6 +31,7 @@ const AdminDashboard = () => {
     const [metrics, setMetrics] = useState({ totalUsers: 0, totalTrades: 0, totalListings: 0 });
     const [allUsers, setAllUsers] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [processingId, setProcessingId] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -61,6 +62,7 @@ const AdminDashboard = () => {
         const inspectorId = assignments[tradeId];
         if (!inspectorId) return alert('Please select an inspector first');
 
+        setProcessingId(tradeId);
         try {
             await api.post(`/trust/assign-inspector?tradeId=${tradeId}&inspectorId=${inspectorId}`);
             alert('Assigned successfully');
@@ -71,7 +73,10 @@ const AdminDashboard = () => {
                 return next;
             });
         } catch (err) {
-            alert('Assignment failed');
+            console.error(err);
+            alert(err.response?.data?.message || 'Assignment failed');
+        } finally {
+            setProcessingId(null);
         }
     };
 
@@ -176,54 +181,56 @@ const AdminDashboard = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                    adminTrades.map(trade => {
-                                        // Filter inspectors based on farmer's state
-                                        const eligibleInspectors = inspectors.filter(i => i.state === trade.farmerState);
+                                {adminTrades.map(trade => {
+                                    // Filter inspectors based on farmer's state, fallback to all if none found
+                                    const localInspectors = inspectors.filter(i => i.state === trade.farmerState);
+                                    const eligibleInspectors = localInspectors.length > 0 ? localInspectors : inspectors;
 
-                                return (
-                                <tr key={trade.id} className="hover:bg-gray-50">
-                                    <td className="p-4">
-                                        <div className="font-bold text-secondary-900">{trade.cropName}</div>
-                                        <div className="text-xs text-secondary-500 font-mono">ID: {trade.id}</div>
-                                        <div className="text-xs text-secondary-400 mt-1">State: {trade.farmerState || 'N/A'}</div>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="font-mono font-medium">₹{trade.finalPrice}</div>
-                                        <Badge variant="warning" className="mt-1">{trade.status}</Badge>
-                                    </td>
-                                    <td className="p-4 text-sm text-secondary-600">
-                                        F: {trade.farmerName}<br />B: {trade.buyerName}
-                                    </td>
-                                    <td className="p-4">
-                                        {trade.status === 'INSPECTION_REQUESTED' ? (
-                                            <Badge variant="info">Request Sent</Badge>
-                                        ) : (
-                                            <div className="flex gap-2 items-center">
-                                                <select
-                                                    className="border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-primary-500 outline-none transition w-40"
-                                                    value={assignments[trade.id] || ''}
-                                                    onChange={(e) => setAssignments(prev => ({ ...prev, [trade.id]: e.target.value }))}
-                                                >
-                                                    <option value="">Select Inspector...</option>
-                                                    {eligibleInspectors.length > 0 ? (
-                                                        eligibleInspectors.map(i => <option key={i.id} value={i.id}>{i.name}</option>)
-                                                    ) : (
-                                                        <option disabled>No inspectors in {trade.farmerState}</option>
-                                                    )}
-                                                </select>
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => handleAssign(trade.id)}
-                                                    disabled={!assignments[trade.id]}
-                                                >
-                                                    Request
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </td>
-                                </tr>
-                                    )})
-                                )}
+                                    return (
+                                        <tr key={trade.id} className="hover:bg-gray-50">
+                                            <td className="p-4">
+                                                <div className="font-bold text-secondary-900">{trade.cropName}</div>
+                                                <div className="text-xs text-secondary-500 font-mono">ID: {trade.id}</div>
+                                                <div className="text-xs text-secondary-400 mt-1">State: {trade.farmerState || 'N/A'}</div>
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="font-mono font-medium">₹{trade.finalPrice}</div>
+                                                <Badge variant="warning" className="mt-1">{trade.status}</Badge>
+                                            </td>
+                                            <td className="p-4 text-sm text-secondary-600">
+                                                F: {trade.farmerName}<br />B: {trade.buyerName}
+                                            </td>
+                                            <td className="p-4">
+                                                {trade.status === 'INSPECTION_REQUESTED' ? (
+                                                    <Badge variant="info">Request Sent</Badge>
+                                                ) : (
+                                                    <div className="flex gap-2 items-center">
+                                                        <select
+                                                            className="border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-primary-500 outline-none transition w-40"
+                                                            value={assignments[trade.id] || ''}
+                                                            onChange={(e) => setAssignments(prev => ({ ...prev, [trade.id]: e.target.value }))}
+                                                        >
+                                                            <option value="">Select Inspector...</option>
+                                                            {eligibleInspectors.length > 0 ? (
+                                                                eligibleInspectors.map(i => <option key={i.id} value={i.id}>{i.name}</option>)
+                                                            ) : (
+                                                                <option disabled>No inspectors in {trade.farmerState}</option>
+                                                            )}
+                                                        </select>
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => handleAssign(trade.id)}
+                                                            disabled={!assignments[trade.id] || processingId === trade.id}
+                                                        >
+                                                            {processingId === trade.id ? 'Assigning...' : 'Request'}
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    )
+                                })
+                                }
                             </tbody>
                         </table>
                     </div>

@@ -56,6 +56,7 @@ com\agri\backend\model\User.class
 com\agri\backend\model\Inspection$InspectionBuilder.class
 com\agri\backend\service\CropService.class
 com\agri\backend\dto\TrustDto$LogisticsUpdate.class
+com\agri\backend\config\SchemaFixer.class
 com\agri\backend\dto\AuthDto$AuthResponse.class
 com\agri\backend\dto\CropDto$CropResponse.class
 com\agri\backend\dto\CropDto.class

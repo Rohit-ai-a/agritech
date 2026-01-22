@@ -106,7 +106,7 @@ const Dashboard = () => {
             alert('Trade request sent successfully!');
             fetchData();
         } catch (err) {
-            alert('Failed to buy crop');
+            alert(err.response?.data?.message || 'Failed to buy crop');
         }
     };
 
@@ -166,7 +166,7 @@ const Dashboard = () => {
                                 value={myTrades.length}
                                 icon={Briefcase}
                                 color="blue"
-                                onClick={() => setShowCompletedTradesModal(true)}
+                                onClick={() => navigate('/trades')}
                             />
                             <StatCard
                                 title="Revenue (Est)"
@@ -219,6 +219,7 @@ const Dashboard = () => {
                                 value={myTrades.length}
                                 icon={Briefcase}
                                 color="blue"
+                                onClick={() => navigate('/trades')}
                             />
                             <StatCard
                                 title="Total Spent"

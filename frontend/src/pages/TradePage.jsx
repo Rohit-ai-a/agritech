@@ -24,7 +24,7 @@ const TradePage = () => {
             });
             navigate('/dashboard');
         } catch (err) {
-            alert('Failed to initiate trade');
+            alert(err.response?.data?.message || 'Failed to initiate trade');
         } finally {
             setIsLoading(false);
         }

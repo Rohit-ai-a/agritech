@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
+    private final com.agri.backend.repository.CropRepository cropRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${admin.username}")
